@@ -13,7 +13,9 @@
     -OfflineWindows at a mounted image's Windows directory instead of scanning the live host.
 
 .PARAMETER ToolsDir
-    Folder containing autorunsc(64).exe and sigcheck(64).exe. Required.
+    Optional. Folder containing autorunsc/sigcheck (a manual zip-extract). If omitted, the tools are
+    called by their plain name from PATH (where a winget/Microsoft Store install puts them, already
+    64-bit). Only set this for a manual extract.
 
 .PARAMETER OutDir
     Output folder. Default: .\persistence-<HOSTNAME>-<yyyyMMdd-HHmmss>.
@@ -25,7 +27,7 @@
     Scan an offline/mounted Windows directory (e.g. E:\Windows) instead of the live system.
 
 .EXAMPLE
-    .\persistence-audit.ps1 -ToolsDir C:\tools\sysinternals -VirusTotal
+    .\persistence-audit.ps1 -VirusTotal                                # tools resolved from PATH
 
 .EXAMPLE
     .\persistence-audit.ps1 -ToolsDir C:\tools\sysinternals -OfflineWindows E:\Windows
@@ -42,17 +44,21 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-if (-not (Test-Path -LiteralPath $ToolsDir)) { throw "ToolsDir not found: $ToolsDir" }
+if ($ToolsDir -and -not (Test-Path -LiteralPath $ToolsDir)) { throw "ToolsDir not found: $ToolsDir" }
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 if (-not $OutDir) { $OutDir = Join-Path (Get-Location) ("persistence-{0}-{1}" -f $env:COMPUTERNAME, $stamp) }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
+# Resolve from ToolsDir (plain name, then 64-suffixed) if given, else from PATH by plain name.
 function Resolve-Tool($base) {
-    foreach ($name in @("$base`64.exe", "$base.exe")) {
-        $p = Join-Path $ToolsDir $name
-        if (Test-Path -LiteralPath $p) { return $p }
+    if ($ToolsDir) {
+        foreach ($name in @("$base.exe", "$base`64.exe")) {
+            $p = Join-Path $ToolsDir $name
+            if (Test-Path -LiteralPath $p) { return $p }
+        }
     }
-    throw "Required tool '$base' not found in $ToolsDir"
+    if (Get-Command $base -ErrorAction SilentlyContinue) { return $base }
+    throw "Required tool '$base' not found on PATH$(if($ToolsDir){" or in $ToolsDir"}). Install Microsoft.Sysinternals.Suite or pass -ToolsDir."
 }
 function Run($exe, [string[]]$Args, $OutFile) {
     Write-Host ("RUN  {0} {1}" -f (Split-Path $exe -Leaf), ($Args -join ' '))

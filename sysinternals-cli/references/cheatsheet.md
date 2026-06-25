@@ -2,7 +2,7 @@
 
 Dense, copy-pasteable command reference for the command-line Sysinternals tools. Grouped by goal. For full flag tables see the per-category references; for the authoritative vendor page of any tool see `references/ms-docs/<tool>.md`.
 
-> **Before you run anything, read the four rules in `SKILL.md` (EULA, PATH, admin, bitness).** Almost every command below includes `-accepteula` because the first run otherwise blocks on a GUI dialog and hangs a non-interactive shell. On 64-bit Windows prefer the `*64.exe` variants (`procdump64`, `handle64`, `autorunsc64`, `sigcheck64`, `listdlls64`).
+> **Before you run anything, read the rules in `SKILL.md` (EULA, on-PATH naming, admin).** Almost every command below includes `-accepteula` because the first run otherwise blocks on a GUI dialog and hangs a non-interactive shell. Tools are called by their **plain name** (`procdump`, `handle`, `autorunsc`, `sigcheck`, `listdlls`…) — a winget/Store install puts them on `PATH` and that name already resolves to the 64-bit build; for a manual zip-extract, call them by full path or append `64` for the 64-bit file.
 
 ---
 
@@ -14,20 +14,20 @@ Dense, copy-pasteable command reference for the command-line Sysinternals tools.
 | Memory/threads/handles for a name prefix | `pslist -accepteula -x svchost` |
 | Exact-name match, memory detail | `pslist -accepteula -m -e lsass` |
 | Processes on a remote host | `pslist -accepteula \\HOST -u DOMAIN\admin` |
-| **List only unsigned DLLs across all processes** (injection sweep) | `listdlls64 -accepteula -u` |
-| Which processes loaded a suspect DLL | `listdlls64 -accepteula -d evil.dll` |
-| Full modules + version + signature for a process | `listdlls64 -accepteula -v malware.exe` |
-| Flag relocated DLLs in a PID (injection hint) | `listdlls64 -accepteula -r 1234` |
-| All handle types for a suspect PID (mutexes, sections) | `handle64 -accepteula -a -p 1234` |
-| Which process holds a locked file | `handle64 -accepteula -u C:\path\report.docx` |
-| Search handles by object/path fragment | `handle64 -accepteula \ProgramData\evil` |
-| Export all handles to CSV | `handle64 -accepteula -a -v > handles.csv` |
-| Force-close a handle in a PID (risky) | `handle64 -accepteula -c 0x1A4 -p 1234 -y` |
-| **Full memory dump of a process** (offline malware analysis) | `procdump64 -accepteula -ma 1234 D:\evi\p1234.dmp` |
-| Arm a dump *before* a sample launches | `procdump64 -accepteula -ma -w sample.exe D:\evi` |
-| Dump at process termination (catch self-deleters) | `procdump64 -accepteula -ma -t malware.exe D:\evi` |
-| Repeated dumps to catch unpack stages | `procdump64 -accepteula -ma -n 5 -s 3 1234 D:\evi` |
-| Dump on CPU spike (suspected miner) | `procdump64 -accepteula -ma -n 3 -s 5 -c 80 susp.exe D:\evi` |
+| **List only unsigned DLLs across all processes** (injection sweep) | `listdlls -accepteula -u` |
+| Which processes loaded a suspect DLL | `listdlls -accepteula -d evil.dll` |
+| Full modules + version + signature for a process | `listdlls -accepteula -v malware.exe` |
+| Flag relocated DLLs in a PID (injection hint) | `listdlls -accepteula -r 1234` |
+| All handle types for a suspect PID (mutexes, sections) | `handle -accepteula -a -p 1234` |
+| Which process holds a locked file | `handle -accepteula -u C:\path\report.docx` |
+| Search handles by object/path fragment | `handle -accepteula \ProgramData\evil` |
+| Export all handles to CSV | `handle -accepteula -a -v > handles.csv` |
+| Force-close a handle in a PID (risky) | `handle -accepteula -c 0x1A4 -p 1234 -y` |
+| **Full memory dump of a process** (offline malware analysis) | `procdump -accepteula -ma 1234 D:\evi\p1234.dmp` |
+| Arm a dump *before* a sample launches | `procdump -accepteula -ma -w sample.exe D:\evi` |
+| Dump at process termination (catch self-deleters) | `procdump -accepteula -ma -t malware.exe D:\evi` |
+| Repeated dumps to catch unpack stages | `procdump -accepteula -ma -n 5 -s 3 1234 D:\evi` |
+| Dump on CPU spike (suspected miner) | `procdump -accepteula -ma -n 3 -s 5 -c 80 susp.exe D:\evi` |
 | Freeze a process for live analysis (don't kill) | `pssuspend -accepteula 1234` / resume `-r 1234` |
 | Headless Procmon capture, preset filters, 60 s | `procmon /accepteula /Quiet /Minimized /LoadConfig t.pmc /BackingFile C:\ir\run.pml /Runtime 60` |
 
@@ -35,12 +35,12 @@ Dense, copy-pasteable command reference for the command-line Sysinternals tools.
 
 | Goal | Command |
 | ---- | ------- |
-| **Full ASEP sweep, all users, hashes + signatures, CSV** | `autorunsc64 -accepteula -a * -s -h -c -t * > autoruns.csv` |
-| Hide signed Microsoft entries (zoom to third-party) | `autorunsc64 -accepteula -a * -m -s -c *` |
-| VirusTotal triage, only unknown/flagged (`-v` queries) | `autorunsc64 -accepteula -a * -h -s -vt -v -u -c *` |
-| Scheduled tasks only | `autorunsc64 -accepteula -a t -c -h -nobanner` |
-| Services + drivers only (rootkit/driver hunt) | `autorunsc64 -accepteula -a s -s -h -c` |
-| Scan an offline / mounted image | `autorunsc64 -accepteula -a * -s -h -c -z D:\Windows > off.csv` |
+| **Full ASEP sweep, all users, hashes + signatures, CSV** | `autorunsc -accepteula -a * -s -h -c -t * > autoruns.csv` |
+| Hide signed Microsoft entries (zoom to third-party) | `autorunsc -accepteula -a * -m -s -c *` |
+| VirusTotal triage, only unknown/flagged (`-v` queries) | `autorunsc -accepteula -a * -h -s -vt -v -u -c *` |
+| Scheduled tasks only | `autorunsc -accepteula -a t -c -h -nobanner` |
+| Services + drivers only (rootkit/driver hunt) | `autorunsc -accepteula -a s -s -h -c` |
+| Scan an offline / mounted image | `autorunsc -accepteula -a * -s -h -c -z D:\Windows > off.csv` |
 
 `-a` category codes: `b`oot `d`AppInitDLL `e`xplorer `g`adgets image`h`ijack `i`Eaddon `k`nownDLL `l`ogon w`m`i `n`etwork c`o`decs `p`rinter lsa`r` `s`ervices+drivers `t`asks `w`inlogon · `*`=all
 
@@ -48,14 +48,14 @@ Dense, copy-pasteable command reference for the command-line Sysinternals tools.
 
 | Goal | Command |
 | ---- | ------- |
-| **Unsigned executables in System32** (malware sweep) | `sigcheck64 -accepteula -u -e -s c:\windows\system32` |
-| Unsigned in user dirs → CSV (high-yield) | `sigcheck64 -accepteula -u -e -s -h -c c:\users > unsigned.csv` |
-| VirusTotal hash lookup of a suspect file (`-v` queries, `-vt` accepts ToS) | `sigcheck64 -accepteula -vt -v -h c:\temp\suspect.exe` |
-| VT on whole tree, only unknown/detected | `sigcheck64 -accepteula -vt -v -u -e -s c:\users` |
-| Entropy / packing check | `sigcheck64 -accepteula -a c:\temp\packed.exe` |
-| Catalog-signed check (drivers) | `sigcheck64 -accepteula -i -h c:\temp\file.sys` |
-| Air-gap VT: stage 1 hash to CSV on victim | `sigcheck64 -accepteula -e -s -h -c c:\windows\system32 > out.csv` |
-| Air-gap VT: stage 2 lookup on online box | `sigcheck64 -accepteula -vt -o out.csv > vtout.csv` |
+| **Unsigned executables in System32** (malware sweep) | `sigcheck -accepteula -u -e -s c:\windows\system32` |
+| Unsigned in user dirs → CSV (high-yield) | `sigcheck -accepteula -u -e -s -h -c c:\users > unsigned.csv` |
+| VirusTotal hash lookup of a suspect file (`-v` queries, `-vt` accepts ToS) | `sigcheck -accepteula -vt -v -h c:\temp\suspect.exe` |
+| VT on whole tree, only unknown/detected | `sigcheck -accepteula -vt -v -u -e -s c:\users` |
+| Entropy / packing check | `sigcheck -accepteula -a c:\temp\packed.exe` |
+| Catalog-signed check (drivers) | `sigcheck -accepteula -i -h c:\temp\file.sys` |
+| Air-gap VT: stage 1 hash to CSV on victim | `sigcheck -accepteula -e -s -h -c c:\windows\system32 > out.csv` |
+| Air-gap VT: stage 2 lookup on online box | `sigcheck -accepteula -vt -o out.csv > vtout.csv` |
 | **Extract strings** (ASCII+Unicode default) | `strings -accepteula -nobanner -n 8 suspect.exe` |
 | Unicode-only strings with offsets | `strings -accepteula -nobanner -u -o -n 8 suspect.exe` |
 | Pull URL/onion IOCs | `strings -accepteula -nobanner suspect.exe \| findstr /i "http:// https:// .onion"` |
@@ -63,11 +63,11 @@ Dense, copy-pasteable command reference for the command-line Sysinternals tools.
 | Recursively hunt ADS (hidden payloads/MOTW) | `streams -accepteula -s c:\users\public\downloads` |
 | Read an ADS (NOTE: `type` won't work) | `more < "file.txt:hidden"` |
 | Strip ADS (DESTRUCTIVE — capture first) | `streams -accepteula -s -d c:\path` |
-| **Services a low-priv group can modify** (privesc) | `accesschk64 -accepteula -uwcqv "Users" *` |
-| Files under System32 writable by Users | `accesschk64 -accepteula -uwqs "Users" c:\windows\system32` |
-| Directories writable by Users (recurse) | `accesschk64 -accepteula -uwdqs "Users" c:\` |
-| Writable service registry keys | `accesschk64 -accepteula -kvuqsw "Users" hklm\System\CurrentControlSet\services` |
-| Full token (groups + privileges) of a process | `accesschk64 -accepteula -p -f cmd.exe` |
+| **Services a low-priv group can modify** (privesc) | `accesschk -accepteula -uwcqv "Users" *` |
+| Files under System32 writable by Users | `accesschk -accepteula -uwqs "Users" c:\windows\system32` |
+| Directories writable by Users (recurse) | `accesschk -accepteula -uwdqs "Users" c:\` |
+| Writable service registry keys | `accesschk -accepteula -kvuqsw "Users" hklm\System\CurrentControlSet\services` |
+| Full token (groups + privileges) of a process | `accesschk -accepteula -p -f cmd.exe` |
 | Secure-delete a file (3 passes) | `sdelete -accepteula -nobanner -p 3 c:\temp\secret.docx` |
 | Wipe free space on C: | `sdelete -accepteula -nobanner -c c:` |
 | Logon sessions + their processes (IR) | `logonsessions -accepteula -p` |
@@ -134,9 +134,9 @@ Dense, copy-pasteable command reference for the command-line Sysinternals tools.
 
 | Goal | Command |
 | ---- | ------- |
-| Install with a detection config | `sysmon64 -accepteula -i sysmonconfig.xml` |
-| Hot-reload config (no reboot) | `sysmon64 -c sysmonconfig.xml` |
-| Dump active config (audit drift) | `sysmon64 -c` |
-| Uninstall (force past missing parts) | `sysmon64 -u force` |
+| Install with a detection config | `sysmon -accepteula -i sysmonconfig.xml` |
+| Hot-reload config (no reboot) | `sysmon -c sysmonconfig.xml` |
+| Dump active config (audit drift) | `sysmon -c` |
+| Uninstall (force past missing parts) | `sysmon -u force` |
 | Query process-create events | `Get-WinEvent -FilterHashtable @{logname='Microsoft-Windows-Sysmon/Operational';id=1}` |
 | Query LSASS-access events | `Get-WinEvent -FilterHashtable @{logname='Microsoft-Windows-Sysmon/Operational';id=10} \| ? {$_.Message -match 'lsass'}` |

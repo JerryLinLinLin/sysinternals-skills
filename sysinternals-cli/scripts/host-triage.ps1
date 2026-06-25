@@ -17,7 +17,9 @@
     (EULA registry key, Prefetch) — note your run in the case log.
 
 .PARAMETER ToolsDir
-    Folder containing the Sysinternals executables (e.g. C:\tools\sysinternals). Required.
+    Optional. Folder containing the Sysinternals executables (e.g. a manual zip-extract). If omitted,
+    tools are called by their plain name from PATH — which is where a winget (Microsoft.Sysinternals.Suite)
+    or Microsoft Store install puts them (already the 64-bit build). Only set this for a manual extract.
 
 .PARAMETER OutDir
     Evidence output folder. Default: .\triage-<HOSTNAME>-<yyyyMMdd-HHmmss> in the current directory.
@@ -26,7 +28,10 @@
     Also run a (slower) recursive unsigned-executable sweep of System32 with sigcheck.
 
 .EXAMPLE
-    .\host-triage.ps1 -ToolsDir C:\tools\sysinternals -OutDir D:\evidence\PC07
+    .\host-triage.ps1 -OutDir D:\evidence\PC07                          # tools resolved from PATH
+
+.EXAMPLE
+    .\host-triage.ps1 -ToolsDir C:\tools\sysinternals -OutDir D:\evidence\PC07   # manual extract
 
 .NOTES
     Reference: ../references/dfir-workflows.md (sections 1-5). Built-in Get-WinEvent is used for the
@@ -34,7 +39,7 @@
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)] [string] $ToolsDir,
+    [string] $ToolsDir,
     [string] $OutDir,
     [switch] $Sigcheck
 )
@@ -42,7 +47,7 @@ param(
 $ErrorActionPreference = 'Continue'
 
 # --- setup --------------------------------------------------------------------
-if (-not (Test-Path -LiteralPath $ToolsDir)) { throw "ToolsDir not found: $ToolsDir" }
+if ($ToolsDir -and -not (Test-Path -LiteralPath $ToolsDir)) { throw "ToolsDir not found: $ToolsDir" }
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 if (-not $OutDir) { $OutDir = Join-Path (Get-Location) ("triage-{0}-{1}" -f $env:COMPUTERNAME, $stamp) }
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
@@ -53,12 +58,16 @@ function Write-Log($msg) {
     $line | Tee-Object -FilePath $log -Append | Write-Host
 }
 
-# Prefer the 64-bit variant; fall back to the unsuffixed name.
+# Resolve a tool: prefer an explicit ToolsDir (plain name, then 64-suffixed), else call it from PATH
+# by its plain name (winget/Store expose the un-suffixed name, already the 64-bit build).
 function Resolve-Tool($base) {
-    foreach ($name in @("$base`64.exe", "$base.exe")) {
-        $p = Join-Path $ToolsDir $name
-        if (Test-Path -LiteralPath $p) { return $p }
+    if ($ToolsDir) {
+        foreach ($name in @("$base.exe", "$base`64.exe")) {
+            $p = Join-Path $ToolsDir $name
+            if (Test-Path -LiteralPath $p) { return $p }
+        }
     }
+    if (Get-Command $base -ErrorAction SilentlyContinue) { return $base }
     return $null
 }
 

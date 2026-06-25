@@ -4,15 +4,15 @@
 
 ## Sysmon (`sysmon`)
 **Purpose:** Install/configure a resident service + boot-start driver that records process/network/registry/file/DNS events to the Windows Event Log for detection and DFIR.
-**Privilege / EULA:** Requires an elevated (Administrator) command prompt for install, config update, and uninstall. Pass `-accepteula` to auto-accept the EULA on install for non-interactive/automation use; otherwise the first run blocks on an interactive EULA prompt. (No `-nobanner` flag exists for Sysmon.) Note: the 64-bit binary is `sysmon64.exe`; `sysmon.exe` is the cross-bitness wrapper used in examples.
+**Privilege / EULA:** Requires an elevated (Administrator) command prompt for install, config update, and uninstall. Pass `-accepteula` to auto-accept the EULA on install for non-interactive/automation use; otherwise the first run blocks on an interactive EULA prompt. (No `-nobanner` flag exists for Sysmon.) Invoke it as `sysmon` — a winget/Store install resolves that on PATH, and `sysmon.exe` is the cross-bitness wrapper; `sysmon64.exe` is the explicit 64-bit binary if you're running a manual extract.
 
 **Synopsis:**
 ```text
-Install:                 sysmon64 -i [<configfile>]
-Update configuration:    sysmon64 -c [<configfile>]
-Install event manifest:  sysmon64 -m
-Print schema:            sysmon64 -s
-Uninstall:               sysmon64 -u [force]
+Install:                 sysmon -i [<configfile>]
+Update configuration:    sysmon -c [<configfile>]
+Install event manifest:  sysmon -m
+Print schema:            sysmon -s
+Uninstall:               sysmon -u [force]
 ```
 
 **Key flags:**
@@ -100,8 +100,8 @@ These are the events Sysmon writes; tight config filtering decides which actuall
   # clone github.com/olafhartong/sysmon-modular first, then:
   Import-Module .\Merge-SysmonXml.ps1
   Merge-AllSysmonXml -Path (Get-ChildItem '[0-9]*\*.xml') -AsString | Out-File sysmonconfig.xml
-  sysmon64 -accepteula -i sysmonconfig.xml          # fresh install
-  sysmon64 -c sysmonconfig.xml                       # update an existing install in place
+  sysmon -accepteula -i sysmonconfig.xml          # fresh install
+  sysmon -c sysmonconfig.xml                       # update an existing install in place
   ```
 
 **Gotchas that bite automation:**

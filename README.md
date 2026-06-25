@@ -22,11 +22,12 @@ sysinternals-skills/
     └── scripts/                  ← PowerShell collectors (host triage, persistence audit, file triage)
 ```
 
-The skill **assumes the Sysinternals executables are available on the host**. They
-are **not on `PATH` by default** and pop a one-time **EULA dialog** that hangs a
-non-interactive shell unless you pass `-accepteula`. Get the tools once with the
-guide below, then use the skill (it bakes in `-accepteula`, the `*64.exe` variants,
-and the admin/bitness rules).
+The skill **assumes the Sysinternals tools are installed and on `PATH`** — which is
+exactly what the winget or Microsoft Store install below gives you (the tools land on
+`PATH` under their plain, already-64-bit names, so you run `procdump`, not
+`procdump64`). They still pop a one-time **EULA dialog** that hangs a non-interactive
+shell unless you pass `-accepteula`. Install once with the guide below, then use the
+skill (it bakes in `-accepteula`, plain-name invocation, and the admin rule).
 
 ---
 
@@ -46,24 +47,27 @@ winget install --id Microsoft.Sysinternals.Suite -e      # the whole suite (moni
 Every tool can run straight from the web share, no download:
 
 ```powershell
-\\live.sysinternals.com\tools\procdump64.exe -accepteula -ma <pid> C:\dumps
+\\live.sysinternals.com\tools\procdump.exe -accepteula -ma <pid> C:\dumps
 # or fetch one file:
-Invoke-WebRequest "https://live.sysinternals.com/procdump64.exe" -OutFile "C:\tools\procdump64.exe"
+Invoke-WebRequest "https://live.sysinternals.com/procdump.exe" -OutFile "C:\tools\procdump.exe"
 ```
 
 ## Verify the install
 
 ```powershell
-& "C:\tools\sysinternals\sigcheck64.exe" -accepteula -nobanner -h C:\Windows\System32\notepad.exe
-& "C:\tools\sysinternals\pslist64.exe"   -accepteula -t            # process tree -> proves it runs
+# After a winget/Store install + a NEW shell, the tools are on PATH under their plain names:
+sigcheck -accepteula -nobanner -h C:\Windows\System32\notepad.exe
+pslist   -accepteula -t            # process tree -> proves it runs
 ```
 
 The first run of each tool writes `HKCU\Software\Sysinternals\<Tool>\EulaAccepted=1`.
 Three things make these tools work non-interactively, all enforced by the skill:
-**(1)** pass `-accepteula` or the first run hangs on a GUI dialog; **(2)** prefer the
-`*64.exe` build on 64-bit Windows; **(3)** most tools need an **elevated** shell and
-fail *quietly* without it. See [`sysinternals-cli/SKILL.md`](sysinternals-cli/SKILL.md)
-for the full operating rules.
+**(1)** pass `-accepteula` or the first run hangs on a GUI dialog; **(2)** call tools by
+their **plain name** — a winget/Store install puts them on `PATH` and that name already
+resolves to the 64-bit build (a manual zip-extract is the only case where you append
+`64` or use a full path); **(3)** most tools need an **elevated** shell and fail
+*quietly* without it. See [`sysinternals-cli/SKILL.md`](sysinternals-cli/SKILL.md) for
+the full operating rules.
 
 ---
 

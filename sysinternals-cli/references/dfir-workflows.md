@@ -12,17 +12,17 @@ Goal: enumerate running processes, their loaded modules, and flag injected/unsig
 
 ```cmd
 :: 1. Process tree — hunt anomalous lineage (winword.exe -> cmd.exe -> powershell.exe)
-pslist64 -accepteula -t
+pslist -accepteula -t
 :: 2. Scope to a name and show memory/threads/handles (e.g. a fake/misplaced svchost)
-pslist64 -accepteula -x svchost
+pslist -accepteula -x svchost
 :: 3. Unsigned DLLs loaded ANYWHERE — strongest single injection/sideload indicator
-listdlls64 -accepteula -u
+listdlls -accepteula -u
 :: 4. Per-PID: version+signature, flag DLLs relocated from base (hollowing/injection)
-listdlls64 -accepteula -r -v 1234
+listdlls -accepteula -r -v 1234
 :: 5. Reverse lookup: every process that loaded a known-bad DLL
-listdlls64 -accepteula -d evil.dll
+listdlls -accepteula -d evil.dll
 :: 6. All handle types for a suspect PID — named mutexes reveal malware family; section/process handles reveal injection targets
-handle64 -accepteula -a -p 1234
+handle -accepteula -a -p 1234
 ```
 
 ## 2. Suspicious-process memory capture (for offline analysis)
@@ -31,13 +31,13 @@ Goal: capture a full image of one suspect process without taking the box down.
 
 ```cmd
 :: Identify the PID first (dump-by-name fails on multiple matches like svchost/powershell)
-pslist64 -accepteula
+pslist -accepteula
 :: FULL dump (-ma = image+mapped+private memory) to the EVIDENCE drive
-procdump64 -accepteula -ma 1234 D:\evidence\susp_1234.dmp
+procdump -accepteula -ma 1234 D:\evidence\susp_1234.dmp
 :: To catch a transient unpacker, arm the dump BEFORE detonation:
-procdump64 -accepteula -ma -w sample.exe D:\evidence
+procdump -accepteula -ma -w sample.exe D:\evidence
 :: To catch self-terminating injectors, dump at termination:
-procdump64 -accepteula -ma -t malware.exe D:\evidence
+procdump -accepteula -ma -t malware.exe D:\evidence
 :: Then, on the ANALYST workstation (not the victim): pull IOCs from the dump
 strings -accepteula -nobanner -n 8 D:\evidence\susp_1234.dmp | findstr /i "http https .onion -enc powershell"
 ```
@@ -52,20 +52,20 @@ tcpvcon -accepteula -a -n
 :: Same as CSV to the evidence drive for offline correlation vs threat-intel IP/domain lists
 tcpvcon -accepteula -a -c -n > D:\evidence\HOST_tcp.csv
 :: For the PID owning a suspicious connection, corroborate via its handles (dropped files, pipes, mutexes)
-handle64 -accepteula -a -p 1234
+handle -accepteula -a -p 1234
 ```
 
 ## 4. Persistence / autostart capture
 
 ```cmd
 :: Real DFIR command (DFIR Madness Case 001): ALL ASEPs, signatures, hashes, CSV
-autorunsc64 -accepteula -a * -s -h -c > D:\evidence\autoruns-HOST.csv
+autorunsc -accepteula -a * -s -h -c > D:\evidence\autoruns-HOST.csv
 :: Noise-reduced hunt: hide signed Microsoft, add VirusTotal hash lookups, clean header
-autorunsc64 -accepteula -a * -c -h -s -v -m -nobanner > D:\evidence\autoruns-HOST.csv
+autorunsc -accepteula -a * -c -h -s -v -m -nobanner > D:\evidence\autoruns-HOST.csv
 :: Targeted: scheduled tasks only (also: l=logon s=services w=winlogon m=wmi d=appinit h=imagehijack)
-autorunsc64 -accepteula -a t -c -h -nobanner > D:\evidence\schtasks.csv
+autorunsc -accepteula -a t -c -h -nobanner > D:\evidence\schtasks.csv
 :: Dead-box: scan a mounted/offline image instead of the live host
-autorunsc64 -accepteula -a * -c -h -s -z E:\Windows > D:\evidence\autoruns-offline.csv
+autorunsc -accepteula -a * -c -h -s -z E:\Windows > D:\evidence\autoruns-offline.csv
 ```
 
 Triage tip: diff the CSV against a known-good baseline of the same image to surface *new* persistence. Treat a "clean" VirusTotal verdict on a low-prevalence/targeted sample with suspicion — low prevalence ≠ benign.
@@ -89,13 +89,13 @@ psloglist -accepteula -s -d 3 -i 7045 system
 
 ```cmd
 :: Unsigned executables (by PE header, not extension) in System32 — official MS malware-hunt example
-sigcheck64 -accepteula -u -e -s c:\windows\system32
+sigcheck -accepteula -u -e -s c:\windows\system32
 :: Higher-yield: user profile trees where unprivileged malware drops payloads, hashed, CSV
-sigcheck64 -accepteula -e -u -s -h -c c:\users > D:\evidence\unsigned_users.csv
+sigcheck -accepteula -e -u -s -h -c c:\users > D:\evidence\unsigned_users.csv
 :: Entropy check — ~7.x/8 bits/byte flags packing/encryption before you bother unpacking
-sigcheck64 -accepteula -a c:\suspect\packed.exe
+sigcheck -accepteula -a c:\suspect\packed.exe
 :: VirusTotal by HASH only (no upload): -v performs the query, -vt accepts the VT ToS non-interactively, -h prints the hashes
-sigcheck64 -accepteula -vt -v -h c:\suspect\dropper.exe
+sigcheck -accepteula -vt -v -h c:\suspect\dropper.exe
 :: Recursively reveal NTFS Alternate Data Streams hiding payloads / mark-of-the-web
 streams -accepteula -s C:\Users\victim\Downloads
 :: Read a suspected stream (cmd 'type' will NOT accept stream syntax) — capture BEFORE deleting
@@ -105,9 +105,9 @@ more < "C:\Lab\readme.txt:hidden"
 **Air-gapped VirusTotal pattern** (victim host never touches the internet):
 ```cmd
 :: Stage 1, on the isolated victim: hash everything to CSV (no network). Output via redirect (sigcheck has no -w flag; -o is the VT-from-CSV reader used in stage 2)
-sigcheck64 -accepteula -e -s -h -c C:\Windows\System32 > C:\out.csv
+sigcheck -accepteula -e -s -h -c C:\Windows\System32 > C:\out.csv
 :: Stage 2, on an online analyst box: -o re-reads the hashes and runs the VT lookups
-sigcheck64 -accepteula -vt -o C:\out.csv > C:\VTout.csv
+sigcheck -accepteula -vt -o C:\out.csv > C:\VTout.csv
 ```
 
 ⚠️ Never use `streams -d` (deletes streams) or `sigcheck -vs` (uploads files to public VirusTotal) on a real case — the first destroys evidence, the second can leak confidential data. Use `-vt`/`-v` (hash lookup only) for reputation.
@@ -116,15 +116,15 @@ sigcheck64 -accepteula -vt -o C:\out.csv > C:\VTout.csv
 
 ```cmd
 :: Fastest "what doesn't belong": every unsigned DLL in any process (needs admin)
-listdlls64 -accepteula -u
+listdlls -accepteula -u
 :: DLLs relocated from preferred base — manual-mapping / injection collision hint
-listdlls64 -accepteula -r outlook
+listdlls -accepteula -r outlook
 :: Full version + signature per module of a sideload-prone app — eyeball publisher mismatches
-listdlls64 -accepteula -v outlook
+listdlls -accepteula -v outlook
 :: Pivot once you have a suspect DLL name: which processes loaded it
-listdlls64 -accepteula -d evil.dll
+listdlls -accepteula -d evil.dll
 :: Cross-tool pivot: every process holding a handle to the suspect path (-a all types, -u owner)
-handle64 -accepteula -a -u C:\ProgramData\evil
+handle -accepteula -a -u C:\ProgramData\evil
 ```
 Detection telemetry behind this (Unit 42): **Sysmon Event ID 7 (ImageLoad)** with `Signed=false` / signature unavailable, loaded from `ProgramData`/`AppData`/user/Public paths or by `rundll32.exe`/`regsvr32.exe`. High module entropy and randomized DLL names in odd subfolders add signal.
 
@@ -160,17 +160,17 @@ Goal: find a misconfiguration a low-privileged user can leverage to reach SYSTEM
 
 ```cmd
 :: Services the Users / Authenticated Users group can MODIFY (the highest-value check)
-accesschk64 -accepteula -uwcqv "Authenticated Users" *
-accesschk64 -accepteula -uwcqv "Users" *
+accesschk -accepteula -uwcqv "Authenticated Users" *
+accesschk -accepteula -uwcqv "Users" *
 :: What the CURRENT user specifically can write (avoids guessing group membership)
-accesschk64 -accepteula -uwcqv %USERNAME% *
+accesschk -accepteula -uwcqv %USERNAME% *
 :: Effective rights on one service — SERVICE_CHANGE_CONFIG / SERVICE_ALL_ACCESS to a low-priv group = win
-accesschk64 -accepteula -ucqv <ServiceName>
+accesschk -accepteula -ucqv <ServiceName>
 :: Directories / files writable by Users (binary planting, overwriting a service EXE)
-accesschk64 -accepteula -uwdqs "Users" c:\
-accesschk64 -accepteula -uwqs "Users" c:\*.*
+accesschk -accepteula -uwdqs "Users" c:\
+accesschk -accepteula -uwqs "Users" c:\*.*
 :: Writable service registry keys (a writable ImagePath is directly repointable)
-accesschk64 -accepteula -kvuqsw "Users" hklm\System\CurrentControlSet\services
+accesschk -accepteula -kvuqsw "Users" hklm\System\CurrentControlSet\services
 ```
 accesschk flag letters: `-u` suppress errors · `-w` write-access only · `-c` service · `-d` directory only · `-s` recurse · `-k` registry · `-q` no banner · `-v` verbose. Dropping `-w` floods output; dropping `-c` treats the arg as a path, not a service.
 
@@ -181,7 +181,7 @@ Defensive complement: `psservice \\HOST security <Svc>` reports a service's DACL
 If you operate these tools on a monitored network, expect to generate exactly the telemetry below. If you *are* the defender, these are your highest-fidelity signals.
 
 - **Credential dumping (ProcDump/clones vs LSASS, T1003.001)** — the marquee abuse:
-  - **Security 4688** (cmd-line auditing on): `procdump`/`procdump64` with `-ma` and `lsass`.
+  - **Security 4688** (cmd-line auditing on): `procdump`/`procdump` with `-ma` and `lsass`.
   - **Sysmon Event 10 (ProcessAccess)** to `lsass.exe` — most reliable; alert on GrantedAccess masks `0x1010`, `0x1410`, `0x1438`, `0x1F1FFF`/`0x1FFFFF`. `0x1410` ≈ ProcDump/Task Manager, `0x1010` ≈ Mimikatz.
   - **Sysmon Event 11 (FileCreate)** of `*.dmp`/`*.mdmp` in `Temp`/`AppData`/`Downloads`, ~20–150 MB. Pair Event 10 + Event 11 for high confidence.
   - **Security 4656/4663** on the lsass object (needs a SACL + object-access auditing; off by default).
@@ -200,11 +200,11 @@ If you operate these tools on a monitored network, expect to generate exactly th
 
 - **EULA hangs automation.** The first run of any tool shows a GUI EULA dialog that blocks a headless shell forever. Always pass `-accepteula` (or pre-seed `reg add HKCU\Software\Sysinternals /v EulaAccepted /t REG_DWORD /d 1 /f`). It's **per-user (HKCU)** — running as SYSTEM/another account re-prompts. A previously *declined* EULA may not be overridden by `-accepteula`.
 - **Admin required.** `handle`, `listdlls` (full view), `procdump -ma`, `pslist`, `sysmon`, `ntfsinfo`, autorunsc `-a *` need elevation — without it you get partial/empty output or access-denied, not an obvious error.
-- **Use the 64-bit binary** (`*64.exe`) on 64-bit Windows — a 32-bit tool under WOW64 sees a redirected/incomplete view (SysWOW64 vs System32) and misses 64-bit process internals. `procdump -64` forces a 64-bit dump of a WOW64 process.
+- **Plain name, no `64` suffix.** A winget/Store install exposes each tool on `PATH` under its un-suffixed name, already the 64-bit build — so run `procdump`, `handle`, `listdlls`, etc. (Bitness still matters: a 32-bit tool under WOW64 sees a redirected view — SysWOW64 vs System32 — and misses 64-bit process internals, which is exactly why the on-PATH command resolves to the 64-bit binary. In a *manual* zip-extract the plain name is the 32-bit file, so append `64` there. `procdump -64` forces a 64-bit dump of a WOW64 target.)
 - **AV/EDR flags the tools themselves.** `procdump.exe`, `psexec.exe`, `handle.exe`, `accesschk.exe` are common LOLBins — EDR may quarantine them mid-incident. Stage from a known-good signed copy; verify the tool runs before relying on it.
 - **Name-prefix matching.** `pslist`/`handle`/`listdlls -p` take a name **prefix**, not exact match (`pslist exp` matches explorer *and* anything starting "exp"). Use a PID, or `pslist -e` for exact match, to avoid acting on the wrong process.
 - **Dump-by-name fails on duplicates** (svchost, powershell) — resolve the PID and dump by PID.
-- **Not on PATH.** The suite isn't on PATH by default — invoke by absolute path (`D:\tools\procdump64.exe`) in scripts.
+- **On PATH after winget/Store; a manual extract isn't.** A winget (`Microsoft.Sysinternals.Suite`) or Microsoft Store install adds the tools to `PATH` by name; a manual zip-extract does not — there, invoke by absolute path (`D:\tools\procdump.exe`) or add the folder to `PATH`.
 - **CSV quirks.** `sigcheck`/`autorunsc -c` uses non-standard double-quoted cells; an Excel round-trip corrupts the format for `-o` re-import. Parse with a real CSV reader; use `-ct` (tab) if fields contain commas.
 
 ## Sources
