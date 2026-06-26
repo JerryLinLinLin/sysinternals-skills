@@ -190,7 +190,7 @@ psloglist -accepteula -s -t "|" -n 200 Security
 # Parse a saved offline event log file (DFIR on a collected .evt)
 psloglist -accepteula -s -l C:\evidence\Security.evt Security
 ```
-**Output / parsing:** `-s` produces one-record-per-line, comma-delimited output (override with `-t`) — the format to use for grep/CSV ingestion. Combine with `-i`/`-e`/time-window flags to keep output lean.
+**Output / parsing:** `-s` produces one-record-per-line, comma-delimited output (override with `-t`) — the format to use for grep/CSV ingestion. Combine with `-i`/`-e`/time-window flags to keep output lean. Note PsLogList has **no `-nobanner`** flag, so even with `-s` it emits its version banner (a blank line, three copyright lines, a blank line) before the first record — skip those lines when importing as CSV (e.g. filter to rows matching a date, or `Select-Object -Skip 5`). The message field is double-quoted and can contain commas, so parse with a real CSV reader, not a plain comma split.
 **Full reference:** `references/ms-docs/psloglist.md`
 
 ## PsLoggedOn (`psloggedon`)

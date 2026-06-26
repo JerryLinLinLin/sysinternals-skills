@@ -181,9 +181,10 @@ vmmap -accepteula suspicious.exe
 ```text
 procmon /accepteula [/Quiet] [/Minimized] [/BackingFile <path.pml>]
         [/LoadConfig <cfg.pmc>] [/Runtime <seconds>] [/Terminate]
+procmon /OpenLog <path.pml> /SaveAs <out.csv> [/Quiet /Minimized]   (headless .PML -> .CSV)
         (consult in-app Help for the authoritative switch list)
 ```
-**Key flags:** The published doc covers capabilities (non-destructive filters, full thread stacks, scalable logging to `.PML`, boot-time logging) but does not include a CLI flag table. Common documented-in-app switches used for automation: `/accepteula` (suppress EULA), `/Quiet`, `/Minimized`, `/BackingFile <pml>` (log target), `/LoadConfig <pmc>` (apply saved filters), `/Runtime <sec>`, `/Terminate` (signal a running instance to stop). Verify exact spelling via `procmon /?` before relying on them.
+**Key flags:** The published doc covers capabilities (non-destructive filters, full thread stacks, scalable logging to `.PML`, boot-time logging) but does not include a CLI flag table. Switches used for automation (all verified working): `/accepteula` (suppress EULA), `/Quiet`, `/Minimized`, `/BackingFile <pml>` (log target), `/LoadConfig <pmc>` (apply saved filters), `/Runtime <sec>` (auto-stop after N seconds), `/Terminate` (signal a running instance to stop), `/OpenLog <pml>` (open a saved log), `/SaveAs <csv|xml>` (export the loaded log — the headless equivalent of GUI File>Save). Launch the capture non-blocking (e.g. `Start-Process`) since the procmon process keeps running while it captures; stop it with `/Runtime` or a follow-up `/Terminate`.
 **Examples:**
 ```cmd
 # Headless timed capture to a backing file, pre-loaded filter config (sandbox detonation)
@@ -194,8 +195,11 @@ procmon /accepteula /Quiet /Minimized /BackingFile C:\ir\capture.pml
 
 # Stop the running capture cleanly so the PML can be collected
 procmon /Terminate
+
+# Convert the captured .PML to CSV WITHOUT the GUI, then parse the CSV (essential for headless use)
+procmon /OpenLog C:\ir\run.pml /SaveAs C:\ir\run.csv /Quiet /Minimized
 ```
-**Output / parsing:** Native `.PML` log preserves all event data and reloads in another Process Monitor instance; logs can be converted/exported to CSV or XML from the GUI (File > Save) for downstream parsing. Filters are saved as `.PMC` config files and applied with `/LoadConfig`.
+**Output / parsing:** The native `.PML` is **binary and only reopens inside Process Monitor** — so for headless/scripted analysis you must convert it: `procmon /OpenLog <pml> /SaveAs <out.csv>` (or `/SaveAs` an `.xml`) writes a parseable file with no GUI. CSV columns are `Time of Day, Process Name, PID, Operation, Path, Result, Detail`; filter by `Process Name` to scope to one process. **Gotcha:** an unfiltered capture also contains periodic **Process Profiling / Thread Profiling** events — these are Procmon's own ~1/second CPU+RAM samples of every process, *not* application I/O. Exclude them when analyzing behavior (a process that shows *only* profiling events did nothing during the window). Filters are saved as `.PMC` config files and applied with `/LoadConfig`.
 **Full reference:** `references/ms-docs/procmon.md`
 
 ## Process Explorer (`procexp`)

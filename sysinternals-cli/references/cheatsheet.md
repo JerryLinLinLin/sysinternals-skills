@@ -30,6 +30,7 @@ Dense, copy-pasteable command reference for the command-line Sysinternals tools.
 | Dump on CPU spike (suspected miner) | `procdump -accepteula -ma -n 3 -s 5 -c 80 susp.exe D:\evi` |
 | Freeze a process for live analysis (don't kill) | `pssuspend -accepteula 1234` / resume `-r 1234` |
 | Headless Procmon capture, preset filters, 60 s | `procmon /accepteula /Quiet /Minimized /LoadConfig t.pmc /BackingFile C:\ir\run.pml /Runtime 60` |
+| Convert a Procmon `.pml` to CSV (headless; `.pml` is GUI-only otherwise) | `procmon /OpenLog C:\ir\run.pml /SaveAs C:\ir\run.csv /Quiet /Minimized` |
 
 ## Persistence / autostart  → `references/autoruns.md`
 

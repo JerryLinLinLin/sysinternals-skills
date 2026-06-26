@@ -29,11 +29,11 @@ One more for security work: **AV/EDR flags the tools themselves** (`procdump.exe
 
 | If the goal is… | Reach for | Reference |
 | --------------- | --------- | --------- |
-| Inspect running processes / process tree | `pslist` | [process-and-memory.md](references/process-and-memory.md) |
+| Inspect running processes / process tree; per-process CPU/memory/handle/thread snapshot | `pslist` | [pstools.md](references/pstools.md) |
 | Find what DLLs/modules a process loaded; hunt unsigned/injected DLLs | `listdlls` | [process-and-memory.md](references/process-and-memory.md) |
 | See open handles; which process locks a file; find malware mutexes | `handle` | [process-and-memory.md](references/process-and-memory.md) |
 | Dump a process's memory (crash/hang/CPU spike, or malware analysis) | `procdump` | [process-and-memory.md](references/process-and-memory.md) |
-| Freeze/resume a process without killing it | `pssuspend` | [process-and-memory.md](references/process-and-memory.md) |
+| Freeze/resume a process without killing it | `pssuspend` | [pstools.md](references/pstools.md) |
 | Headless capture of file/registry/process activity | `procmon` (CLI flags) | [process-and-memory.md](references/process-and-memory.md) |
 | Enumerate autostart / persistence locations (ASEPs) | `autorunsc` | [autoruns.md](references/autoruns.md) |
 | Verify code signatures; find unsigned binaries; VirusTotal-by-hash; entropy | `sigcheck` | [security-and-files.md](references/security-and-files.md) |

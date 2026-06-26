@@ -205,7 +205,8 @@ If you operate these tools on a monitored network, expect to generate exactly th
 - **Name-prefix matching.** `pslist`/`handle`/`listdlls -p` take a name **prefix**, not exact match (`pslist exp` matches explorer *and* anything starting "exp"). Use a PID, or `pslist -e` for exact match, to avoid acting on the wrong process.
 - **Dump-by-name fails on duplicates** (svchost, powershell) — resolve the PID and dump by PID.
 - **On PATH after winget/Store; a manual extract isn't.** A winget (`Microsoft.Sysinternals.Suite`) or Microsoft Store install adds the tools to `PATH` by name; a manual zip-extract does not — there, invoke by absolute path (`D:\tools\procdump.exe`) or add the folder to `PATH`.
-- **CSV quirks.** `sigcheck`/`autorunsc -c` uses non-standard double-quoted cells; an Excel round-trip corrupts the format for `-o` re-import. Parse with a real CSV reader; use `-ct` (tab) if fields contain commas.
+- **Output encoding is inconsistent — the #1 cause of garbled parsing.** When redirected to a file or pipe, most Sysinternals tools emit **UTF‑16LE** (verified: `autorunsc`, `sigcheck`), but some emit **ANSI/UTF‑8** (verified: `tcpvcon`). Read each with the matching encoding or you get spaced‑out text (`T i m e`) for UTF‑16 misread as bytes, or CJK mojibake for ANSI misread as UTF‑16. Robust pattern: redirect with `cmd /c "tool ... > out.txt"` (preserves raw bytes), then in PowerShell try `Get-Content out.txt -Encoding Unicode` and `-Encoding utf8` and keep whichever yields readable ASCII (e.g. the one whose lines contain `.dll`/`TCP`/`,`). Don't assume; detect.
+- **CSV quirks.** `sigcheck`/`autorunsc -c` use non-standard double-quoted cells; an Excel round-trip corrupts the format for `-o` re-import. Parse with a real CSV reader and use `-ct` (tab) if fields contain commas. Note `tcpvcon -c -n` emits 6 fields with **no ports** (`Proto,Process,PID,State,LocalIP,RemoteIP`); drop `-n` to get ports.
 
 ## Sources
 
