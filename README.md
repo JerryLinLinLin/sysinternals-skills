@@ -1,108 +1,100 @@
 # sysinternals-skills
 
-An AI Agent **skill** — [`sysinternals-cli`](sysinternals-cli/SKILL.md) — for
-driving the [Microsoft Sysinternals](https://learn.microsoft.com/sysinternals/)
-command-line tools on Windows from a shell. It's a cheatsheet + bundled reference
-docs for system administration, troubleshooting, and — heavily — digital forensics,
-incident response (DFIR), threat hunting, and malware triage: process / handle / DLL
-inspection, memory & crash dumps (ProcDump), persistence enumeration (Autoruns),
-signature + VirusTotal checks (Sigcheck), strings & NTFS alternate-data-stream
-hunting, permission / privilege-escalation auditing (AccessChk), remote execution
-(PsExec & PsTools), network-to-process mapping (TCPView), and endpoint telemetry
-(Sysmon).
+Two AI Agent skills for using Microsoft Sysinternals on Windows:
 
-```
+- [`sysinternals-cli`](skills/sysinternals-cli/SKILL.md) is the broad command-line cheatsheet and
+  router for Sysinternals/PsTools administration, troubleshooting, DFIR, and security workflows.
+- [`procmon`](skills/procmon/SKILL.md) is a focused Process Monitor cheatsheet for general application
+  and system behavior analysis: launch failures, configuration discovery, missing dependencies,
+  permissions, writes, child processes, installers, services, performance clues, and working/failing
+  trace comparison. It is intentionally not a malware-analysis playbook.
+
+```text
 sysinternals-skills/
-├── README.md                     ← you are here (setup / install)
+├── README.md
 ├── LICENSE
-└── sysinternals-cli/
-    ├── SKILL.md                  ← the cheatsheet entry point (routes by goal → tool → reference)
-    ├── references/               ← cheatsheet, DFIR playbooks, per-category guides
-    │   └── ms-docs/              ← the verbatim Microsoft Learn page for every tool (authoritative fallback)
-    └── scripts/                  ← PowerShell collectors (host triage, persistence audit, file triage)
+└── skills/
+    ├── sysinternals-cli/
+    │   ├── SKILL.md
+    │   ├── references/
+    │   │   └── ms-docs/          # copied Microsoft Learn pages for the suite
+    │   └── scripts/              # PowerShell collectors
+    └── procmon/
+        ├── SKILL.md
+        ├── agents/openai.yaml
+        └── references/           # Procmon recipes, CLI reference, copied Microsoft page
 ```
-
-The skill **assumes the Sysinternals tools are installed and on `PATH`** — which is
-exactly what the winget or Microsoft Store install below gives you (the tools land on
-`PATH` under their plain, already-64-bit names, so you run `procdump`, not
-`procdump64`). They still pop a one-time **EULA dialog** that hangs a non-interactive
-shell unless you pass `-accepteula`. Install once with the guide below, then use the
-skill (it bakes in `-accepteula`, plain-name invocation, and the admin rule).
-
----
 
 ## Get the Sysinternals tools
 
-The tools are standalone signed `.exe` files — no installer, no runtime needed.
-
-### Whole suite (recommended)
-
-```powershell
-winget install --id Microsoft.Sysinternals.Suite -e      # the whole suite (moniker: sysinternals)
-# or just the tools you need, e.g.:  winget install --id Microsoft.Sysinternals.ProcessExplorer -e
-```
-
-### A single tool on demand (Sysinternals Live)
-
-Every tool can run straight from the web share, no download:
+The skills assume the relevant Sysinternals executables are installed and available on `PATH`.
+Install the whole suite with winget:
 
 ```powershell
-\\live.sysinternals.com\tools\procdump.exe -accepteula -ma <pid> C:\dumps
-# or fetch one file:
-Invoke-WebRequest "https://live.sysinternals.com/procdump.exe" -OutFile "C:\tools\procdump.exe"
+winget install --id Microsoft.Sysinternals.Suite -e
 ```
 
-## Verify the install
+Or run/download an individual tool from Sysinternals Live:
 
 ```powershell
-# After a winget/Store install + a NEW shell, the tools are on PATH under their plain names:
-sigcheck -accepteula -nobanner -h C:\Windows\System32\notepad.exe
-pslist   -accepteula -t            # process tree -> proves it runs
+\\live.sysinternals.com\tools\procmon.exe
+Invoke-WebRequest -Uri 'https://live.sysinternals.com/procmon.exe' `
+    -OutFile 'C:\Tools\Sysinternals\procmon.exe'
 ```
 
-The first run of each tool writes `HKCU\Software\Sysinternals\<Tool>\EulaAccepted=1`.
-Three things make these tools work non-interactively, all enforced by the skill:
-**(1)** pass `-accepteula` or the first run hangs on a GUI dialog; **(2)** call tools by
-their **plain name** — a winget/Store install puts them on `PATH` and that name already
-resolves to the 64-bit build (a manual zip-extract is the only case where you append
-`64` or use a full path); **(3)** most tools need an **elevated** shell and fail
-*quietly* without it. See [`sysinternals-cli/SKILL.md`](sysinternals-cli/SKILL.md) for
-the full operating rules.
+A winget or Microsoft Store installation exposes the already-native build under the plain tool name,
+such as `procmon.exe`, `procdump.exe`, or `sigcheck.exe`. A manually extracted archive is the main
+case where an architecture-suffixed executable may be selected deliberately.
 
----
+Verify discovery in a new shell:
 
-## Install this skill into your AI agent (global / user space)
+```powershell
+Get-Command -Name 'procmon.exe', 'sigcheck.exe', 'pslist.exe' -CommandType Application
+sigcheck.exe -accepteula -nobanner -h 'C:\Windows\System32\notepad.exe'
+pslist.exe -accepteula -t
+```
 
-Claude Code, Codex CLI, and GitHub Copilot all read the **same `SKILL.md` Agent Skill
-format** from a personal skills dir — installing is just dropping the
-`sysinternals-cli/` folder into each:
+Sysinternals tools show a one-time per-user EULA prompt. An unattended invocation can block unless
+the applicable `-accepteula` or `/AcceptEula` option is used after acceptance is authorized. Procmon
+and many inspection tools also require an elevated shell for complete results.
 
-| Agent | Global skills dir (Windows) |
-|---|---|
+## Install the skills into an AI agent
+
+Claude Code, Codex CLI, and GitHub Copilot use the same `SKILL.md` Agent Skill format. Copy either or
+both folders from `skills/` into the agent's personal skill directory:
+
+| Agent | Personal skills directory on Windows |
+| --- | --- |
 | Claude Code | `%USERPROFILE%\.claude\skills\` |
 | OpenAI Codex CLI | `%USERPROFILE%\.codex\skills\` |
 | GitHub Copilot | `%USERPROFILE%\.copilot\skills\` |
 
 ```powershell
-$src = "C:\projects\sysinternals-skills\sysinternals-cli"     # adjust to where you cloned it
-foreach ($a in '.claude', '.codex', '.copilot') {             # keep only the agents you use
-  $dst = "$env:USERPROFILE\$a\skills"
-  New-Item -ItemType Directory -Force $dst | Out-Null
-  Copy-Item -Recurse -Force $src $dst
+$repositorySkills = 'C:\projects\sysinternals-skills\skills' # adjust for the clone location
+$skillNames = @('sysinternals-cli', 'procmon')                 # keep only the skills wanted
+$agentHomes = @('.claude', '.codex', '.copilot')              # keep only the agents used
+
+foreach ($agentHome in $agentHomes) {
+    $destinationRoot = Join-Path $env:USERPROFILE "$agentHome\skills"
+    $null = New-Item -ItemType Directory -Path $destinationRoot -Force
+
+    foreach ($skillName in $skillNames) {
+        $source = Join-Path $repositorySkills $skillName
+        Copy-Item -LiteralPath $source -Destination $destinationRoot -Recurse -Force
+    }
 }
 ```
 
-Each agent auto-discovers the skill by its `name`/`description` and loads it when a
-task matches (in Claude Code, run `/skills` to confirm).
+Each agent discovers a skill through the `name` and `description` in its `SKILL.md` and loads the
+full instructions only when a task matches.
 
 ## Licensing
 
-- This skill (the `sysinternals-cli/` authored content and `scripts/`) is released
-  under the [MIT License](LICENSE).
-- `sysinternals-cli/references/ms-docs/` contains the official Sysinternals
-  documentation by Microsoft, redistributed from the
-  [MicrosoftDocs/sysinternals](https://github.com/MicrosoftDocs/sysinternals) repo
-  under its original **Creative Commons Attribution 4.0** license. Those pages are
-  © Microsoft; see <https://learn.microsoft.com/sysinternals/> for the canonical
-  source. The Sysinternals tools themselves are distributed by Microsoft under the
-  Sysinternals Software License Terms and are **not** included here.
+- The authored skill content and scripts under `skills/` are released under the [MIT License](LICENSE).
+- `skills/sysinternals-cli/references/ms-docs/` and
+  `skills/procmon/references/microsoft-learn-procmon.md` contain Microsoft Sysinternals documentation
+  copied from the [MicrosoftDocs/sysinternals](https://github.com/MicrosoftDocs/sysinternals)
+  material under its original **Creative Commons Attribution 4.0** license. The canonical published
+  documentation is at [Microsoft Learn](https://learn.microsoft.com/sysinternals/).
+- The Sysinternals executables are distributed by Microsoft under the Sysinternals Software License
+  Terms and are not included in this repository.

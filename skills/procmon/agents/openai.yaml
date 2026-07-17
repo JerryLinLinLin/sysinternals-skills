@@ -1,0 +1,4 @@
+interface:
+  display_name: "Procmon"
+  short_description: "Troubleshoot Windows activity with Procmon"
+  default_prompt: "Use $procmon to capture and explain why this Windows application is behaving unexpectedly."
