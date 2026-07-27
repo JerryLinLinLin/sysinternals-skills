@@ -29,6 +29,7 @@
     ],
     "websiteURL": "https://github.com/JerryLinLinLin/sysinternals-skills",
     "brandColor": "#0078D4",
+    "logo": "./assets/icon.png",
     "defaultPrompt": "Investigate this Windows system with the appropriate Sysinternals tool."
   }
 }
