@@ -1,0 +1,21 @@
+{
+  "name": "sysinternals",
+  "version": "0.3.0",
+  "description": "Troubleshoot and investigate Windows systems with Sysinternals CLI tools and Process Monitor.",
+  "author": {
+    "name": "JerryLinLinLin",
+    "url": "https://github.com/JerryLinLinLin"
+  },
+  "homepage": "https://github.com/JerryLinLinLin/sysinternals-skills",
+  "repository": "https://github.com/JerryLinLinLin/sysinternals-skills",
+  "license": "MIT",
+  "keywords": [
+    "sysinternals",
+    "procmon",
+    "troubleshooting",
+    "dfir",
+    "windows"
+  ],
+  "category": "Security",
+  "skills": "./skills/"
+}

@@ -13,6 +13,15 @@ description: >-
 Use Procmon to observe what Windows software does at runtime. Keep captures narrow and base
 conclusions on event sequences, not isolated failures.
 
+## Install the dependency
+
+Install the complete Sysinternals suite, open a new terminal, and verify Procmon:
+
+```powershell
+winget install --id Microsoft.Sysinternals.Suite --exact
+procmon /?
+```
+
 ## Rules
 
 1. Run Procmon elevated for complete capture. Use `/AcceptEula` only when unattended acceptance is

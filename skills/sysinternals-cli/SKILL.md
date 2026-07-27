@@ -15,6 +15,15 @@ description: >-
 
 The Sysinternals suite is ~70 small, single-purpose Windows utilities by Mark Russinovich et al. Many are command-line driven and are the standard toolkit for Windows troubleshooting, system administration, and — heavily — digital forensics, incident response, and threat hunting. This skill is the entry point for using them **from a shell, non-interactively**.
 
+## Install the dependency
+
+Install the complete suite with WinGet, open a new terminal, and verify one CLI:
+
+```powershell
+winget install --id Microsoft.Sysinternals.Suite --exact
+sigcheck -?
+```
+
 This file routes you to the right tool and reference. **Read the three operating rules first — they are what make these tools work in an automated shell.** Then jump to the relevant reference or playbook; don't load everything.
 
 ## ⚠️ Three rules that make this work (read before running anything)
